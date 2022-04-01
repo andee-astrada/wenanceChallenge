@@ -61,6 +61,13 @@ public class BitcoinStats {
 
     public void setPercentageAgainstMaxValue(double maxValue) {
         if(avgValue!=0)
-            this.percentageAgainstMaxValue = maxValue*100/avgValue;
+            this.percentageAgainstMaxValue = round(maxValue*100/avgValue) - 100;
+    }
+
+    private double round(double value) {
+        long factor = (long) Math.pow(10, 2);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
     }
 }

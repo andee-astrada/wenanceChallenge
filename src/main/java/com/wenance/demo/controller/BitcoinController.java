@@ -1,21 +1,15 @@
 package com.wenance.demo.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wenance.demo.model.BitcoinPrice;
 import com.wenance.demo.model.BitcoinStats;
+import com.wenance.demo.service.BitcoinService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -23,82 +17,31 @@ import java.util.*;
 @Configuration
 @RestController
 public class BitcoinController {
-    private ArrayList<BitcoinPrice> bitcoinPrices = new ArrayList<BitcoinPrice>();
 
-    @Scheduled(fixedRate = 10000)
-    public void retrieveBitcoinConvertionRatio(){
-
-        String endpoint = "https://cex.io/api/last_price/BTC/USD";
-
-        //inicializarlo en el contxto y pedirlo como parametro
-        RestTemplate restTemplate = new RestTemplate();
-
-        List<HttpMessageConverter<?>> messageConverters = new ArrayList<HttpMessageConverter<?>>();
-
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-
-        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.ALL));
-        messageConverters.add(converter);
-        restTemplate.setMessageConverters(messageConverters);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("user-agent", "Application");
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        BitcoinPrice response = restTemplate.exchange(endpoint, HttpMethod.GET, entity, BitcoinPrice.class).getBody();
-
-        System.out.println(response.toString());
-        bitcoinPrices.add(response);
-    }
+    @Autowired
+    private BitcoinService bitcoinService;
 
     @RequestMapping("/bitcoin/getRatioByTime")
-    public String getBitcoinByTime(@RequestParam(value = "timestamp", defaultValue = "") String timestamp) throws JsonProcessingException {
+    public ResponseEntity getBitcoinByTime(@RequestParam(value = "timestamp", defaultValue = "") String timestamp) throws JsonProcessingException {
 
         LocalDateTime inputTime = LocalDateTime.parse(timestamp);
         System.out.println(inputTime.toString());
 
-        //ArrayList<BitcoinConvertionRatio> convertionLog = getMockList() ;
-        ArrayList<BitcoinPrice> convertionLog = bitcoinPrices;
+        BitcoinPrice foundPrice = bitcoinService.getBitcoinByTime(inputTime);
 
-        BitcoinPrice foundRatio =
-                convertionLog.stream().filter(ratios -> ratios.getTimestamp().isBefore(inputTime))
-                        .filter(ratios -> ratios.getTimestamp().plusSeconds(10).isAfter(inputTime)).findFirst().get();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.writeValueAsString(foundRatio);
-        //return String.valueOf(foundRatio.getLprice());
+        return ResponseEntity.ok(foundPrice);
     }
 
 
     @RequestMapping("/bitcoin/getBitcoinTrends")
-    public String getBitcoinTrends(@RequestParam(value = "dateFrom", defaultValue = "") String dateFrom,
+    public ResponseEntity getBitcoinTrends(@RequestParam(value = "dateFrom", defaultValue = "") String dateFrom,
                                    @RequestParam(value = "dateTo", defaultValue = "") String dateTo) throws JsonProcessingException {
 
-        BitcoinStats bitcoinStats = new BitcoinStats();
-        bitcoinStats.setDateFrom(LocalDateTime.parse(dateFrom));
-        bitcoinStats.setDateTo(LocalDateTime.parse(dateTo));
+        BitcoinStats bitcoinStats = bitcoinService.getBitcoinTrends(
+                        LocalDateTime.parse(dateFrom),
+                        LocalDateTime.parse(dateTo));
 
-        //ArrayList<BitcoinConvertionRatio> convertionLog = getMockList() ;
-        ArrayList<BitcoinPrice> convertionLog = bitcoinPrices;
-
-        double maxValue =
-                convertionLog.stream().max(Comparator.comparing(BitcoinPrice::getLprice)).get().getLprice();
-        System.out.println("MaxValue: " + maxValue);
-        OptionalDouble avg =
-                convertionLog.stream()
-                        .filter(ratios -> ratios.getTimestamp().isAfter(bitcoinStats.getDateFrom()))
-                        .filter(ratios -> ratios.getTimestamp().isBefore(bitcoinStats.getDateTo()))
-                        .mapToDouble(BitcoinPrice::getLprice).average();
-
-        if(avg.isPresent()){
-            bitcoinStats.setAvgValue(avg.getAsDouble());
-            System.out.println("Avg: " + avg.getAsDouble());
-        }
-        bitcoinStats.setPercentageAgainstMaxValue(maxValue);
-        System.out.println("Perc: " + bitcoinStats.getPercentageAgainstMaxValue());
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.writeValueAsString(bitcoinStats);
+        return ResponseEntity.ok(bitcoinStats);
     }
 
 
