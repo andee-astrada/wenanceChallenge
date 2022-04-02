@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wenance.demo.model.BitcoinPrice;
 import com.wenance.demo.model.BitcoinStats;
 import com.wenance.demo.service.BitcoinService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,58 +11,69 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.time.format.DateTimeParseException;
 
 @Configuration
 @RestController
 public class BitcoinController {
 
-    @Autowired
-    private BitcoinService bitcoinService;
+//    @Autowired
+    private final BitcoinService bitcoinService;
 
-    @RequestMapping("/bitcoin/getRatioByTime")
-    public ResponseEntity getBitcoinByTime(@RequestParam(value = "timestamp", defaultValue = "") String timestamp) throws JsonProcessingException {
+    public BitcoinController(BitcoinService bitcoinService){
+        this.bitcoinService = bitcoinService;
+    }
 
-        LocalDateTime inputTime = LocalDateTime.parse(timestamp);
-        System.out.println(inputTime.toString());
+    @RequestMapping("/bitcoin/getPriceByTime")
+    public ResponseEntity getBitcoinByTime(@RequestParam(value = "timestamp", defaultValue = "") String timestamp)  {
+
+        LocalDateTime inputTime;
+
+        try {
+            inputTime = LocalDateTime.parse(timestamp);
+
+            if(inputTime.isAfter(LocalDateTime.now()))
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Input date cannot happen in the future");
+
+        } catch (DateTimeParseException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format, please use yyyy-MM-ddTHH:mm:ss");
+        }
 
         BitcoinPrice foundPrice = bitcoinService.getBitcoinByTime(inputTime);
 
-        return ResponseEntity.ok(foundPrice);
+        if(foundPrice != null)
+            return ResponseEntity.ok(foundPrice);
+        else
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No data for the time specified");
     }
 
 
     @RequestMapping("/bitcoin/getBitcoinTrends")
     public ResponseEntity getBitcoinTrends(@RequestParam(value = "dateFrom", defaultValue = "") String dateFrom,
-                                   @RequestParam(value = "dateTo", defaultValue = "") String dateTo) throws JsonProcessingException {
+                                   @RequestParam(value = "dateTo", defaultValue = "") String dateTo) {
+        LocalDateTime localDateFrom, localDateTo;
+
+        try{
+            localDateFrom = LocalDateTime.parse(dateFrom);
+            localDateTo = LocalDateTime.parse(dateTo);
+
+            if(localDateFrom.isAfter(LocalDateTime.now()))
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("From date cannot happen in the future");
+            if(localDateFrom.isAfter(localDateTo))
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Range");
+
+        } catch (DateTimeParseException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format, please use yyyy-MM-ddTHH:mm:ss");
+        }
 
         BitcoinStats bitcoinStats = bitcoinService.getBitcoinTrends(
-                        LocalDateTime.parse(dateFrom),
-                        LocalDateTime.parse(dateTo));
+                LocalDateTime.parse(dateFrom),
+                LocalDateTime.parse(dateTo));
 
-        return ResponseEntity.ok(bitcoinStats);
-    }
-
-
-    private ArrayList<BitcoinPrice> getMockList(){
-        ArrayList<BitcoinPrice> retList = new ArrayList<BitcoinPrice>();
-        double[] lprices = { 44194.0, 40472.7, 40747.9,
-                40676.4, 40927.5, 47336.3, 41290.5, 45472.9, 44778.3, 44902.9,
-                46528.8, 45133.7, 43105.7, 46306.0, 48485.1, 42041.9, 46206.6,
-                43896.9, 46756.6, 40230.7, 48273.3, 42544.1, 42064.7, 43137.7,
-                47061.0, 43055.3, 46899.6, 44433.4, 41692.7, 45568.7, 40369.6,
-                44797.0, 41133.1, 43897.9, 47756.4, 44206.0, 42520.7, 40365.3,
-                40730.2, 45939.5, 42676.3, 48691.4, 42254.6, 42879.1, 43455.9,
-                42742.4, 41583.8, 44822.5, 43788.6, 48201.4};
-
-        LocalDateTime timestamp = LocalDateTime.now();
-        for(int i=0; i<50; i++){
-            BitcoinPrice bccr = new BitcoinPrice(lprices[i], "BTC", "USD", timestamp);
-            retList.add(bccr);
-            System.out.println(bccr.toString());
-            timestamp = timestamp.plusSeconds(10);
-        }
-        return retList;
+        if(bitcoinStats != null)
+            return ResponseEntity.ok(bitcoinStats);
+        else
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No results for the time range specified");
     }
 
 }

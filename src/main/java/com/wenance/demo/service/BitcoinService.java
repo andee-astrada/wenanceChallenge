@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.OptionalDouble;
 
 @Service
@@ -24,11 +25,13 @@ public class BitcoinService {
     public BitcoinPrice getBitcoinByTime(LocalDateTime dt){
         LinkedList<BitcoinPrice> priceLog = bitcoinHistory.getBitcoinHistory();
 
-        BitcoinPrice foundPrice =
+        Optional<BitcoinPrice> foundPrice =
                 priceLog.stream().filter(prices -> prices.getTimestamp().isBefore(dt))
-                        .filter(prices -> prices.getTimestamp().plusSeconds(10).isAfter(dt)).findFirst().get();
+                        .filter(prices -> prices.getTimestamp().plusSeconds(10).isAfter(dt)).findFirst();
 
-        return foundPrice;
+        if(foundPrice.isPresent())
+            return foundPrice.get();
+        else return null;
     }
 
     public  BitcoinStats getBitcoinTrends(LocalDateTime dateFrom, LocalDateTime dateTo){
@@ -36,9 +39,10 @@ public class BitcoinService {
 
         BitcoinStats bitcoinStats = new BitcoinStats(dateFrom, dateTo);
 
-        double maxValue =
-                priceLog.stream().max(Comparator.comparing(BitcoinPrice::getLprice)).get().getLprice();
-        System.out.println("MaxValue: " + maxValue);
+        bitcoinStats.setMaxValue(
+                priceLog.stream().max(Comparator.comparing(BitcoinPrice::getLprice)).get().getLprice());
+
+        //System.out.println("MaxValue: " + bitcoinStats.getMaxValue());
 
         OptionalDouble avg =
                 priceLog.stream()
@@ -46,13 +50,17 @@ public class BitcoinService {
                         .filter(ratios -> ratios.getTimestamp().isBefore(bitcoinStats.getDateTo()))
                         .mapToDouble(BitcoinPrice::getLprice).average();
 
-        if(avg.isPresent()){
-            bitcoinStats.setAvgValue(avg.getAsDouble());
-            System.out.println("Avg: " + avg.getAsDouble());
-        }
-        bitcoinStats.setPercentageAgainstMaxValue(maxValue);
-        System.out.println("Perc: " + bitcoinStats.getPercentageAgainstMaxValue());
+//        System.out.println("Count: " +
+//                priceLog.stream()
+//                        .filter(ratios -> ratios.getTimestamp().isAfter(bitcoinStats.getDateFrom()))
+//                        .filter(ratios -> ratios.getTimestamp().isBefore(bitcoinStats.getDateTo())).count()
+//                );
 
+        if(!avg.isPresent()) return null;
+
+        bitcoinStats.setAvgValue(avg.getAsDouble());
+        //System.out.println("Avg: " + avg.getAsDouble());
+        //System.out.println("Perc: " + bitcoinStats.getPercentageAgainstMaxValue());
 
         return bitcoinStats;
     }

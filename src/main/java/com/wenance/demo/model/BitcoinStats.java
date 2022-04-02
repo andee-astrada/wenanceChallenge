@@ -18,6 +18,7 @@ public class BitcoinStats {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime dateTo;
 
+    private double maxValue;
     private double avgValue;
     private double percentageAgainstMaxValue;
 
@@ -29,7 +30,6 @@ public class BitcoinStats {
     public BitcoinStats(){
 
     }
-
 
     public LocalDateTime getDateFrom() {
         return dateFrom;
@@ -53,15 +53,26 @@ public class BitcoinStats {
 
     public void setAvgValue(double avgValue) {
         this.avgValue = avgValue;
+        if(this.maxValue!=0 && avgValue!=0)
+            calculatePercentageAgainstMaxValue();
     }
 
     public double getPercentageAgainstMaxValue() {
         return percentageAgainstMaxValue;
     }
 
-    public void setPercentageAgainstMaxValue(double maxValue) {
-        if(avgValue!=0)
-            this.percentageAgainstMaxValue = round(maxValue*100/avgValue) - 100;
+    public double getMaxValue() {
+        return maxValue;
+    }
+
+    public void setMaxValue(double maxValue) {
+        this.maxValue = maxValue;
+        if(this.maxValue!=0 && avgValue!=0)
+            calculatePercentageAgainstMaxValue();
+    }
+
+    private void calculatePercentageAgainstMaxValue() {
+        percentageAgainstMaxValue = round((avgValue*100/maxValue)-100);
     }
 
     private double round(double value) {
