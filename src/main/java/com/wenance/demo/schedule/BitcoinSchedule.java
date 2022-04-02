@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class BitcoinSchedule {
@@ -46,12 +47,12 @@ public class BitcoinSchedule {
         headers.add("user-agent", "Application");
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        BitcoinPrice response = restTemplate.exchange(endpoint, HttpMethod.GET, entity, BitcoinPrice.class).getBody();
+        Optional<BitcoinPrice> response = Optional.ofNullable(restTemplate.exchange(endpoint, HttpMethod.GET, entity, BitcoinPrice.class).getBody());
 
-        bitcoinHistory.addBitcoinPrice(response);
-
-        System.out.println(response.toString());
-
+        if (response.isPresent()) {
+            bitcoinHistory.addBitcoinPrice(response.get());
+            System.out.println(response.get().toString());
+        }
     }
 
 }
