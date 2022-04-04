@@ -6,6 +6,7 @@ Wenance Challenge - Solución propuesta
 La solución cuenta con dos métodos REST
 
 - GET /bitcoin/prices
+
 	Parámetros: timestamp (formato yyyy-MM-ddTHH:mm:ss, permitiendo agregar milisegundos)
 
 	Devuelve un objeto BitcoinPrice en la fecha más cercana al parámetro enviado, y un código 404 si para la fecha 
@@ -15,6 +16,7 @@ La solución cuenta con dos métodos REST
 	http://localhost:8080/bitcoin/prices?timestamp=2022-04-02T17:59:01
 
 - GET /bitcoin/trends
+
 	Parámetros: dateFrom, dateTo (formato yyyy-MM-ddTHH:mm:ss, permitiendo agregar milisegundos)
 
 	Devuelve un objeto BitcoinStats para el rango definido, y un codigo 404 si para el rango aún no se estaban 
