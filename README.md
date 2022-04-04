@@ -5,23 +5,23 @@ Wenance Challenge - Solución propuesta
 
 La solución cuenta con dos métodos REST
 
-- GET /bitcoin/getPriceByTime
+- GET /bitcoin/prices
 	Parámetros: timestamp (formato yyyy-MM-ddTHH:mm:ss, permitiendo agregar milisegundos)
 
 	Devuelve un objeto BitcoinPrice en la fecha más cercana al parámetro enviado, y un código 404 si para la fecha 
 	aun no se estaban registrando precios.
 
 	Ejemplo para ejecución local
-	http://localhost:8080/bitcoin/getPriceByTime?timestamp=2022-04-02T17:59:01
+	http://localhost:8080/bitcoin/prices?timestamp=2022-04-02T17:59:01
 
-- GET /bitcoin/getBitcoinTrends
+- GET /bitcoin/trends
 	Parámetros: dateFrom, dateTo (formato yyyy-MM-ddTHH:mm:ss, permitiendo agregar milisegundos)
 
 	Devuelve un objeto BitcoinStats para el rango definido, y un codigo 404 si para el rango aún no se estaban 
 	registrando precios.
 
 	Ejemplo para ejecución local
-	http://localhost:8080/bitcoin/getBitcoinTrends?dateFrom=2022-04-02T17:57:32&dateTo=2022-04-02T17:59:00
+	http://localhost:8080/bitcoin/trends?dateFrom=2022-04-02T17:57:32&dateTo=2022-04-02T17:59:00
 
 
 **CARGA DE DATOS**
