@@ -6,6 +6,7 @@ import com.wenance.demo.model.BitcoinStats;
 import com.wenance.demo.service.BitcoinService;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.*;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ import java.time.format.DateTimeParseException;
 
 @Configuration
 @RestController
+@RequestMapping("/bitcoin")
 public class BitcoinController {
 
 //    @Autowired
@@ -24,7 +26,7 @@ public class BitcoinController {
         this.bitcoinService = bitcoinService;
     }
 
-    @RequestMapping("/bitcoin/getPriceByTime")
+    @GetMapping("/prices")
     public ResponseEntity getBitcoinByTime(@RequestParam(value = "timestamp", defaultValue = "") String timestamp)  {
 
         LocalDateTime inputTime;
@@ -48,7 +50,7 @@ public class BitcoinController {
     }
 
 
-    @RequestMapping("/bitcoin/getBitcoinTrends")
+    @GetMapping("/trends")
     public ResponseEntity getBitcoinTrends(@RequestParam(value = "dateFrom", defaultValue = "") String dateFrom,
                                    @RequestParam(value = "dateTo", defaultValue = "") String dateTo) {
         LocalDateTime localDateFrom, localDateTo;
